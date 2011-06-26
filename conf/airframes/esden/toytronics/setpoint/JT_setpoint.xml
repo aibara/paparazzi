@@ -2,17 +2,21 @@
   <section name="SETPOINT" prefix="SETPOINT_">
     <define name="MAX_STICK_ANGLE_DEG"        value="90.0"/>
     <define name="MAX_STICK_DEG_PER_SEC"      value="270.0"/>
-    <define name="BOUND_ERROR_HEADING_DEG"    value="35.0"/>
+    <define name="BOUND_ERROR_HEADING_DEG"    value="89.0"/>
 
     <define name="HOVER_PITCH_TRIM_DEG"                   value="0.0"/>
 
     <define name="ROLL_TO_YAW_RATE_FF_FACTOR"    value="1.6"/>
-    <define name="ACCEL_TURN_COORDINATION_GAIN"  value="0.25"/>
+    <define name="ACCEL_TURN_COORDINATION_GAIN"  value="1.6"/>
 
     <define name="DEADBAND"                   value="0.03"/>
-    <define name="MODE_2_BOUND_QUAT_DEG_X"    value="50"/>
-    <define name="MODE_2_BOUND_QUAT_DEG_Y"    value="50"/>
-    <define name="MODE_2_BOUND_QUAT_DEG_Z"    value="50"/>
+    <define name="MODE_2_BOUND_QUAT_DEG_X"    value="90"/>
+    <define name="MODE_2_BOUND_QUAT_DEG_Y"    value="90"/>
+    <define name="MODE_2_BOUND_QUAT_DEG_Z"    value="90"/>
+  </section>
+
+  <section name="TOYTRONICS" prefix="TOYTRONICS_">
+    <define name="HOVER_BYPASS_ROLL"    value="TRUE"/>
 
   </section>
 </airframe>
