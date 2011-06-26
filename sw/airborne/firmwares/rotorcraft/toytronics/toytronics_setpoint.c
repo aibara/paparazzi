@@ -347,8 +347,8 @@ toytronics_set_sp_hover_forward_from_rc()
   double roll_body   = rcr * SETPOINT_MAX_STICK_ANGLE_DEG*M_PI/180.0;
 
   // integrate stick to get setpoint heading
-  setpoint.setpoint_heading += dt*SETPOINT_MAX_STICK_DEG_PER_SEC*M_PI/180.0*rcy;
-
+    setpoint.setpoint_heading += dt*SETPOINT_MAX_STICK_DEG_PER_SEC*M_PI/180.0*rcy;
+  
   // auto-turn coordination
   #define START_FADING_DEG -50
   #define FINISH_FADING_DEG -70
@@ -366,7 +366,11 @@ toytronics_set_sp_hover_forward_from_rc()
   double heading_error = setpoint.setpoint_heading - setpoint.estimated_heading;
   wrap_to_pi(&heading_error);
   BOUND(heading_error, -setpoint_absolute_heading_bound_deg*M_PI/180.0, setpoint_absolute_heading_bound_deg*M_PI/180.0);
-  setpoint.setpoint_heading = setpoint.estimated_heading + heading_error;
+  #ifdef TOYTRONICS_HOVER_BYPASS_ROLL
+    setpoint.setpoint_heading = setpoint.estimated_heading + heading_error -dt*10*heading_error;
+  #else
+    setpoint.setpoint_heading = setpoint.estimated_heading + heading_error;
+  #endif
   wrap_to_pi(&setpoint.setpoint_heading);
 
   // start straight up
@@ -404,7 +408,7 @@ toytronics_set_sp_hover_forward_from_rc()
   /* BOUND(setpoint.q_b2sp.q3, -setpoint_incremental_bounds_deg.z*M_PI/180.0/2.0, setpoint_incremental_bounds_deg.z*M_PI/180.0/2.0); */
 
   /* // let setpoint decay back to body */
-  /* discrete_exponential_decay( &setpoint.q_b2sp.q1, setpoint_aerobatic_decay_time.x, dt ); */
+  /*discrete_exponential_decay( &heading_error, setpoint_aerobatic_decay_time.x, dt ); */
   /* discrete_exponential_decay( &setpoint.q_b2sp.q2, setpoint_aerobatic_decay_time.y, dt ); */
   /* discrete_exponential_decay( &setpoint.q_b2sp.q3, setpoint_aerobatic_decay_time.z, dt ); */
 
@@ -437,7 +441,8 @@ toytronics_set_sp_absolute_forward_from_rc()
   double rcy = apply_deadband(rc->yaw, SETPOINT_DEADBAND);
 
   euler_t e_n2sp;
-  e_n2sp.pitch = rcp * SETPOINT_MAX_STICK_ANGLE_DEG * M_PI/180.0;
+  double pitch_trim_deg=5;
+  e_n2sp.pitch = (rcp* SETPOINT_MAX_STICK_ANGLE_DEG + pitch_trim_deg )* M_PI/180.0;//e_n2sp.pitch = rcp * SETPOINT_MAX_STICK_ANGLE_DEG * M_PI/180.0;
   e_n2sp.roll  = rcr * SETPOINT_MAX_STICK_ANGLE_DEG * M_PI/180.0;
 
   // integrate stick to get setpoint heading
@@ -458,7 +463,7 @@ toytronics_set_sp_absolute_forward_from_rc()
   quat_of_euler321( &setpoint.q_n2sp, &e_n2sp );
 
   // smooth transition
-  smooth_transition_angle -= dt*M_PI/180.0*90;
+  smooth_transition_angle -= 0.75*dt*M_PI/180.0*90;
   if (smooth_transition_angle < 0) smooth_transition_angle = 0.0;
 
   quat_t q_st;
@@ -524,9 +529,9 @@ toytronics_set_sp_incremental_from_rc()
   BOUND(setpoint.q_b2sp.q3, -setpoint_incremental_bounds_deg.z*M_PI/180.0/2.0, setpoint_incremental_bounds_deg.z*M_PI/180.0/2.0);
 
   // let setpoint decay back to body
-  discrete_exponential_decay( &setpoint.q_b2sp.q1, setpoint_aerobatic_decay_time.x, dt );
+  /*discrete_exponential_decay( &setpoint.q_b2sp.q1, setpoint_aerobatic_decay_time.x, dt );
   discrete_exponential_decay( &setpoint.q_b2sp.q2, setpoint_aerobatic_decay_time.y, dt );
-  discrete_exponential_decay( &setpoint.q_b2sp.q3, setpoint_aerobatic_decay_time.z, dt );
+  discrete_exponential_decay( &setpoint.q_b2sp.q3, setpoint_aerobatic_decay_time.z, dt );*/
 
   // normalize
   setpoint.q_b2sp.q0 = sqrt(1 - SQR(setpoint.q_b2sp.q1) - SQR(setpoint.q_b2sp.q2) - SQR(setpoint.q_b2sp.q3));
@@ -551,7 +556,7 @@ toytronics_mode_enter(int new_mode)
 
   case GUIDANCE_H_MODE_TOYTRONICS_HOVER:
     #ifdef TOYTRONICS_HOVER_BYPASS_ROLL
-    toytronics_sp_set_absolute_heading_bound_deg( 0.0 );
+    toytronics_sp_set_absolute_heading_bound_deg( 90.0 );
     #else
     toytronics_sp_set_absolute_heading_bound_deg( SETPOINT_BOUND_ERROR_HEADING_DEG );
     #endif
@@ -563,7 +568,12 @@ toytronics_mode_enter(int new_mode)
     break;
 
   case GUIDANCE_H_MODE_TOYTRONICS_HOVER_FORWARD:
+    #ifdef TOYTRONICS_HOVER_BYPASS_ROLL
+    toytronics_sp_set_absolute_heading_bound_deg( 90.0 );
+    #else
     toytronics_sp_set_absolute_heading_bound_deg( SETPOINT_BOUND_ERROR_HEADING_DEG );
+    #endif
+//toytronics_sp_set_absolute_heading_bound_deg( SETPOINT_BOUND_ERROR_HEADING_DEG );
 
     // initialize setpoint heading to current heading
     toytronics_sp_enter_hover_forward();
