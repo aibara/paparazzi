@@ -74,7 +74,13 @@ void ppm_arch_init ( void ) {
   ------------------------------------------------------------ */
   TIM_ICInitTypeDef  TIM_ICInitStructure;
   TIM_ICInitStructure.TIM_Channel = TIM_Channel_2;
+#if defined PPM_PULSE_TYPE && PPM_PULSE_TYPE == PPM_PULSE_TYPE_POSITIVE
   TIM_ICInitStructure.TIM_ICPolarity = TIM_ICPolarity_Rising;
+#elif defined PPM_PULSE_TYPE && PPM_PULSE_TYPE == PPM_PULSE_TYPE_NEGATIVE
+  TIM_ICInitStructure.TIM_ICPolarity = TIM_ICPolarity_Falling;
+#else
+#error "ppm_arch.h: Unknown PM_PULSE_TYPE"
+#endif
   TIM_ICInitStructure.TIM_ICSelection = TIM_ICSelection_DirectTI;
   TIM_ICInitStructure.TIM_ICPrescaler = TIM_ICPSC_DIV1;
   TIM_ICInitStructure.TIM_ICFilter = 0x00;
